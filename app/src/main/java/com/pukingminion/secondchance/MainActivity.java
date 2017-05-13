@@ -5,8 +5,10 @@ import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -17,8 +19,11 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.plattysoft.leonids.ParticleSystem;
+
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.Date;
 
@@ -41,6 +46,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private String mPath;
     private TextView introTv;
     private TextView resultsTv;
+    private MediaPlayer mMediaPlayer;
+    private View arenaView;
+    private TextView startBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,7 +59,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void initUiElements() {
-        View arenaView = findViewById(R.id.arena_view);
+        arenaView = findViewById(R.id.arena_view);
         shareLayout = (RelativeLayout) findViewById(R.id.share_layout);
         introLayout = (LinearLayout) findViewById(R.id.intro_layout);
         resultLayout = (LinearLayout) findViewById(R.id.result_layout);
@@ -63,7 +71,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         accuracyTv = (TextView) findViewById(R.id.accuracy);
         TextView shareBtn = (TextView) findViewById(R.id.share_btn);
         TextView restartTv = (TextView) findViewById(R.id.restart_game);
-        TextView startBtn = (TextView) findViewById(R.id.start_button);
+        startBtn = (TextView) findViewById(R.id.start_button);
 
         Typeface custom_font = Typeface.createFromAsset(getAssets(), "fonts/Amatic-Bold.ttf");
         Typeface cfNew = Typeface.createFromAsset(getAssets(), "fonts/Lobster_1.3.otf");
@@ -72,6 +80,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         shareBtn.setTypeface(custom_font);
         restartTv.setTypeface(custom_font);
         startBtn.setTypeface(custom_font);
+
 
 
         counterTv.setTypeface(cfNew);
@@ -101,6 +110,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         startBtn.setOnClickListener(this);
         shareBtn.setOnClickListener(this);
         restartTv.setOnClickListener(this);
+        play("banana.mp3");
+        new ParticleSystem(this, 100, getResources().getDrawable(R.drawable.animal_def), 10000)
+                .setSpeedRange(0.2f, 0.25f)
+                .setRotationSpeed(1)
+                .emit(startBtn, 2);
+    }
+
+    private void play(String fileName) {
+//        String[] fileList = HelperToolUtils.getAllFilesInAssetByExtension(this, "", ".mp3");
+        try {
+            AssetFileDescriptor descriptor = getAssets().openFd(fileName);
+            long start = descriptor.getStartOffset();
+            long end = descriptor.getLength();
+            mMediaPlayer = new MediaPlayer();
+            mMediaPlayer.setDataSource(descriptor.getFileDescriptor(), start, end);
+            mMediaPlayer.prepare();
+            mMediaPlayer.setVolume(1.0f, 1.0f);
+            mMediaPlayer.start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -116,16 +146,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     calculateScore();
                     showLayout(R.id.result_layout);
                 }
+                play("tick.mp3");
                 break;
             case R.id.start_button:
                 previousTimeInMs = System.currentTimeMillis();
+                if (mMediaPlayer != null) {
+                    mMediaPlayer.stop();
+                    mMediaPlayer.release();
+                }
                 showLayout(R.id.counter_tv);
                 break;
             case R.id.share_btn:
                 new TakeScreenshotTask().execute();
                 break;
             case R.id.restart_game:
+                play("banana.mp3");
                 resetScore();
+                new ParticleSystem(this, 100, getResources().getDrawable(R.drawable.animal_def), 10000)
+                        .setSpeedRange(0.2f, 0.25f)
+                        .setRotationSpeed(1)
+                        .emit(startBtn, 2);
                 currentTimeInMs = 0;
                 showLayout(R.id.intro_layout);
         }
