@@ -19,8 +19,6 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.plattysoft.leonids.ParticleSystem;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -82,7 +80,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         startBtn.setTypeface(custom_font);
 
 
-
         counterTv.setTypeface(cfNew);
         counterTv.setTextSize(150);
 
@@ -111,10 +108,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         shareBtn.setOnClickListener(this);
         restartTv.setOnClickListener(this);
         play("banana.mp3");
-        new ParticleSystem(this, 100, getResources().getDrawable(R.drawable.animal_def), 10000)
-                .setSpeedRange(0.2f, 0.25f)
-                .setRotationSpeed(1)
-                .emit(startBtn, 2);
+//        new ParticleSystem(this, 100, getResources().getDrawable(R.drawable.animal_def), 10000)
+//                .setSpeedRange(0.2f, 0.25f)
+//                .setRotationSpeed(1)
+//                .emit(startBtn, 2);
     }
 
     private void play(String fileName) {
@@ -162,12 +159,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.restart_game:
                 play("banana.mp3");
                 resetScore();
-                new ParticleSystem(this, 100, getResources().getDrawable(R.drawable.animal_def), 10000)
-                        .setSpeedRange(0.2f, 0.25f)
-                        .setRotationSpeed(1)
-                        .emit(startBtn, 2);
+//                new ParticleSystem(this, 100, getResources().getDrawable(R.drawable.animal_def), 10000)
+//                        .setSpeedRange(0.2f, 0.25f)
+//                        .setRotationSpeed(1)
+//                        .emit(startBtn, 2);
                 currentTimeInMs = 0;
                 showLayout(R.id.intro_layout);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(mMediaPlayer != null) {
+            if(mMediaPlayer.isPlaying()) {
+                mMediaPlayer.pause();
+            } else {
+                mMediaPlayer.stop();
+                mMediaPlayer.start();
+            }
         }
     }
 
@@ -249,8 +259,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 shareLayout.setVisibility(View.GONE);
                 counterTv.setVisibility(View.VISIBLE);
                 offsetTv.setVisibility(currentCount == 10 ? View.GONE : View.VISIBLE);
-                ObjectAnimator animator = getObjectAnimator(counterTv, 1, 1.1f, 500);
-                ObjectAnimator animatorTwo = getObjectAnimator(counterTv, 1.1f, 1, 500);
+                ObjectAnimator animator = getObjectAnimator(counterTv, 1, 1.05f, 500);
+                ObjectAnimator animatorTwo = getObjectAnimator(counterTv, 1.05f, 1, 500);
                 AnimatorSet animatorSet = new AnimatorSet();
                 animatorSet.playSequentially(animator, animatorTwo);
                 animatorSet.start();
