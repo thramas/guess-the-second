@@ -47,6 +47,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private MediaPlayer mMediaPlayer;
     private View arenaView;
     private TextView startBtn;
+    private TextView restartTv;
+    private TextView shareBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,10 +69,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         resultsTv = (TextView) findViewById(R.id.results_tv);
         perfectsTv = (TextView) findViewById(R.id.total_perfects);
         accuracyTv = (TextView) findViewById(R.id.accuracy);
-        TextView shareBtn = (TextView) findViewById(R.id.share_btn);
-        TextView restartTv = (TextView) findViewById(R.id.restart_game);
+        shareBtn = (TextView) findViewById(R.id.share_btn);
+        restartTv = (TextView) findViewById(R.id.restart_game);
         startBtn = (TextView) findViewById(R.id.start_button);
+        setListeners();
+        setTypefaces();
+        resetGame();
+    }
 
+    private void setListeners() {
+        arenaView.setOnClickListener(this);
+        startBtn.setOnClickListener(this);
+        shareBtn.setOnClickListener(this);
+        restartTv.setOnClickListener(this);
+    }
+
+    private void resetGame() {
+        shareLayout.setVisibility(View.VISIBLE);
+        resultLayout.setVisibility(View.GONE);
+        introLayout.setVisibility(View.VISIBLE);
+        counterTv.setVisibility(View.GONE);
+        offsetTv.setVisibility(View.GONE);
+        currentTimeInMs = 0;
+        resetScore();
+        play("banana.mp3");
+    }
+
+    private void setTypefaces() {
         Typeface custom_font = Typeface.createFromAsset(getAssets(), "fonts/Amatic-Bold.ttf");
         Typeface cfNew = Typeface.createFromAsset(getAssets(), "fonts/Lobster_1.3.otf");
 
@@ -93,29 +118,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         resultsTv.setTypeface(custom_font);
         resultsTv.setTextSize(50);
         offsetTv.setTextSize(50);
-
-
-        shareLayout.setVisibility(View.VISIBLE);
-        resultLayout.setVisibility(View.GONE);
-        introLayout.setVisibility(View.VISIBLE);
-        counterTv.setVisibility(View.GONE);
-        offsetTv.setVisibility(View.GONE);
-        currentTimeInMs = 0;
-        resetScore();
-
-        arenaView.setOnClickListener(this);
-        startBtn.setOnClickListener(this);
-        shareBtn.setOnClickListener(this);
-        restartTv.setOnClickListener(this);
-        play("banana.mp3");
-//        new ParticleSystem(this, 100, getResources().getDrawable(R.drawable.animal_def), 10000)
-//                .setSpeedRange(0.2f, 0.25f)
-//                .setRotationSpeed(1)
-//                .emit(startBtn, 2);
     }
 
     private void play(String fileName) {
-//        String[] fileList = HelperToolUtils.getAllFilesInAssetByExtension(this, "", ".mp3");
         try {
             AssetFileDescriptor descriptor = getAssets().openFd(fileName);
             long start = descriptor.getStartOffset();
@@ -157,14 +162,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 new TakeScreenshotTask().execute();
                 break;
             case R.id.restart_game:
-                play("banana.mp3");
-                resetScore();
-//                new ParticleSystem(this, 100, getResources().getDrawable(R.drawable.animal_def), 10000)
-//                        .setSpeedRange(0.2f, 0.25f)
-//                        .setRotationSpeed(1)
-//                        .emit(startBtn, 2);
-                currentTimeInMs = 0;
-                showLayout(R.id.intro_layout);
+                resetGame();
         }
     }
 
