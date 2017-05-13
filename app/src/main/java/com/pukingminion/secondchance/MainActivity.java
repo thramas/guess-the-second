@@ -14,6 +14,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -28,33 +29,38 @@ import java.util.Date;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final int TARGET = 1000;
-    private long currentTimeInMs;
-    private long cumulativeOffset;
+    private static final String THEME_MUSIC = "theme_music.mp3";
+    private int launch = 0;
+    private long currentTimeInMs = 0;
+    private long cumulativeOffset = 0;
     private long currentCount = 0;
-    private long previousTimeInMs;
-    private long noOfPerfects;
-    private double accuracy;
+    private long previousTimeInMs = 0;
+    private long noOfPerfects = 0;
+    private double accuracy = 0.0;
+    private String mPath;
+    private View arenaView;
     private TextView offsetTv;
     private TextView counterTv;
     private TextView accuracyTv;
     private TextView perfectsTv;
-    private RelativeLayout shareLayout;
-    private LinearLayout introLayout;
-    private LinearLayout resultLayout;
-    private String mPath;
     private TextView introTv;
     private TextView resultsTv;
-    private MediaPlayer mMediaPlayer;
-    private View arenaView;
     private TextView startBtn;
     private TextView restartTv;
     private TextView shareBtn;
+    private TextView gameTitle;
+    private LinearLayout introLayout;
+    private LinearLayout resultLayout;
+    private RelativeLayout shareLayout;
+    private MediaPlayer mMediaPlayer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_custm);
+        setSupportActionBar(toolbar);
         initUiElements();
     }
 
@@ -72,6 +78,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         shareBtn = (TextView) findViewById(R.id.share_btn);
         restartTv = (TextView) findViewById(R.id.restart_game);
         startBtn = (TextView) findViewById(R.id.start_button);
+        gameTitle = (TextView) findViewById(R.id.game_title);
         setListeners();
         setTypefaces();
         resetGame();
@@ -92,14 +99,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         offsetTv.setVisibility(View.GONE);
         currentTimeInMs = 0;
         resetScore();
-        play("banana.mp3");
+        play(THEME_MUSIC);
     }
 
     private void setTypefaces() {
         Typeface custom_font = Typeface.createFromAsset(getAssets(), "fonts/Amatic-Bold.ttf");
         Typeface cfNew = Typeface.createFromAsset(getAssets(), "fonts/Lobster_1.3.otf");
+        Typeface gameFont = Typeface.createFromAsset(getAssets(), "fonts/SEASRN__.ttf");
 
-        Typeface btnFont = Typeface.createFromAsset(getAssets(), "fonts/ostrich-regular.ttf");
         shareBtn.setTypeface(custom_font);
         restartTv.setTypeface(custom_font);
         startBtn.setTypeface(custom_font);
@@ -117,6 +124,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         introTv.setTextSize(50);
         resultsTv.setTypeface(custom_font);
         resultsTv.setTextSize(50);
+        gameTitle.setTypeface(gameFont);
+        gameTitle.setTextSize(50);
         offsetTv.setTextSize(50);
     }
 
@@ -169,12 +178,38 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onResume() {
         super.onResume();
-        if(mMediaPlayer != null) {
-            if(mMediaPlayer.isPlaying()) {
-                mMediaPlayer.pause();
+        mediaPlayerResume();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mediaPlayerResume();
+    }
+
+    private void mediaPlayerResume() {
+        if (mMediaPlayer != null) {
+            if(launch == 0) {
+                AssetFileDescriptor descriptor = null;
+                try {
+                    descriptor = getResources().getAssets().openFd("theme_music");
+                    long start = descriptor.getStartOffset();
+                    long end = descriptor.getLength();
+                    mMediaPlayer = new MediaPlayer();
+                    mMediaPlayer.setDataSource(descriptor.getFileDescriptor(), start, end);
+                    mMediaPlayer.prepare();
+                    mMediaPlayer.setVolume(1.0f, 1.0f);
+                    mMediaPlayer.start();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             } else {
-                mMediaPlayer.stop();
-                mMediaPlayer.start();
+                if (mMediaPlayer.isPlaying()) {
+                    mMediaPlayer.pause();
+                } else {
+                    mMediaPlayer.stop();
+                    mMediaPlayer.start();
+                }
             }
         }
     }
