@@ -3,6 +3,7 @@ package com.pukingminion.secondchance;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
+import android.app.Fragment;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.AssetFileDescriptor;
@@ -13,6 +14,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
@@ -53,6 +55,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private LinearLayout resultLayout;
     private RelativeLayout shareLayout;
     private MediaPlayer mMediaPlayer;
+    private TextView instructions;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +75,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         offsetTv = (TextView) findViewById(R.id.difference_from_perfect);
         counterTv = (TextView) findViewById(R.id.counter_tv);
         introTv = (TextView) findViewById(R.id.intro_tv);
+        instructions = (TextView) findViewById(R.id.instructions);
         resultsTv = (TextView) findViewById(R.id.results_tv);
         perfectsTv = (TextView) findViewById(R.id.total_perfects);
         accuracyTv = (TextView) findViewById(R.id.accuracy);
@@ -89,6 +93,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         startBtn.setOnClickListener(this);
         shareBtn.setOnClickListener(this);
         restartTv.setOnClickListener(this);
+        instructions.setOnClickListener(this);
     }
 
     private void resetGame() {
@@ -125,7 +130,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         resultsTv.setTypeface(custom_font);
         resultsTv.setTextSize(50);
         gameTitle.setTypeface(gameFont);
-        gameTitle.setTextSize(50);
+        instructions.setTypeface(custom_font);
         offsetTv.setTextSize(50);
     }
 
@@ -145,6 +150,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
+    public void onBackPressed() {
+        Fragment fr = getFragmentManager().findFragmentByTag("blankfragment");
+        if (null != fr && fr.isAdded()) {
+            // show dialog
+            fr.getFragmentManager().popBackStack();
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.arena_view:
@@ -160,6 +176,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 play("tick.mp3");
                 break;
             case R.id.start_button:
+                resetGame();
                 previousTimeInMs = System.currentTimeMillis();
                 if (mMediaPlayer != null) {
                     mMediaPlayer.stop();
@@ -172,6 +189,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.restart_game:
                 resetGame();
+                break;
+            case R.id.instructions:
+                InstructionsFragment nextFrag = new InstructionsFragment();
+                android.support.v4.app.FragmentManager fragmentManager = getSupportFragmentManager();
+                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction().
+                        addToBackStack("blankfragment");
+                fragmentTransaction.add(android.R.id.content, nextFrag, "blankfragment").commit();
+                break;
+
         }
     }
 
@@ -189,7 +215,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void mediaPlayerResume() {
         if (mMediaPlayer != null) {
-            if(launch == 0) {
+            if (launch == 0) {
                 AssetFileDescriptor descriptor = null;
                 try {
                     descriptor = getResources().getAssets().openFd("theme_music");
@@ -263,7 +289,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             offsetTv.setText("Perfect!!!");
             noOfPerfects++;
         } else {
-            offsetTv.setText(String.valueOf(offset));
+            offsetTv.setText(String.valueOf(offset) + " ms");
         }
 
         previousTimeInMs = currentTimeInMs;

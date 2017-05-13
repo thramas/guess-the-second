@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Panda</string>
     <string name="intro_text">Try to be \n perfect!</string>
+    <string name="instructions">Keep clicking at 1 second intervals. See if your perception of time is better than the world!</string>
 </resources>
