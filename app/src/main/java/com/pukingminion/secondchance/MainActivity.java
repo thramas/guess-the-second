@@ -8,9 +8,11 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Typeface;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.net.wifi.p2p.WifiP2pManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
@@ -18,9 +20,15 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -32,14 +40,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private static final int TARGET = 1000;
     private static final String THEME_MUSIC = "theme_music.mp3";
-    private int launch = 0;
     private long currentTimeInMs = 0;
     private long cumulativeOffset = 0;
     private long currentCount = 0;
     private long previousTimeInMs = 0;
     private long noOfPerfects = 0;
     private double accuracy = 0.0;
-    private String mPath;
     private View arenaView;
     private TextView offsetTv;
     private TextView counterTv;
@@ -56,6 +62,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private RelativeLayout shareLayout;
     private MediaPlayer mMediaPlayer;
     private TextView instructions;
+    private AdView mAdView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,7 +71,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_custm);
         setSupportActionBar(toolbar);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         initUiElements();
+        MobileAds.initialize(getApplicationContext(), getResources().getString(R.string.banner_ad_unit_id));
     }
 
     private void initUiElements() {
@@ -83,6 +92,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         restartTv = (TextView) findViewById(R.id.restart_game);
         startBtn = (TextView) findViewById(R.id.start_button);
         gameTitle = (TextView) findViewById(R.id.game_title);
+        arenaView.setVisibility(View.GONE);
+        mAdView = (AdView) findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        if (mAdView != null) {
+            mAdView.loadAd(adRequest);
+        }
         setListeners();
         setTypefaces();
         resetGame();
@@ -172,23 +187,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 } else {
                     calculateScore();
                     showLayout(R.id.result_layout);
+                    arenaView.setVisibility(View.GONE);
                 }
                 play("tick.mp3");
                 break;
             case R.id.start_button:
                 resetGame();
+                arenaView.setVisibility(View.VISIBLE);
                 previousTimeInMs = System.currentTimeMillis();
                 if (mMediaPlayer != null) {
                     mMediaPlayer.stop();
                     mMediaPlayer.release();
                 }
+//                if(particleSystem != null) {
+//                    particleSystem.cancel();
+//                }
                 showLayout(R.id.counter_tv);
                 break;
             case R.id.share_btn:
-                new TakeScreenshotTask().execute();
+                CreateBitmapTask mCreateBitmapTask = new CreateBitmapTask(arenaView);
+                mCreateBitmapTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
                 break;
             case R.id.restart_game:
                 resetGame();
+//                if(particleSystem != null) {
+//                    particleSystem.emit(Math.round(instructions.getX()), Math.round(instructions.getY()), 3);
+//                }
                 break;
             case R.id.instructions:
                 InstructionsFragment nextFrag = new InstructionsFragment();
@@ -204,17 +228,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onResume() {
         super.onResume();
-        mediaPlayerResume();
+//        mediaPlayerResume();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        mediaPlayerResume();
+//        mediaPlayerResume();
     }
 
     private void mediaPlayerResume() {
         if (mMediaPlayer != null) {
+            int launch = 0;
             if (launch == 0) {
                 AssetFileDescriptor descriptor = null;
                 try {
@@ -246,12 +271,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         try {
             Bitmap bitmap = getScreenShot(shareLayout);
-            mPath = store(bitmap, String.valueOf(System.currentTimeMillis()));
+//            mPath = store(bitmap, String.valueOf(System.currentTimeMillis()));
         } catch (Throwable e) {
             // Several error may come out with file handling or OOM
             e.printStackTrace();
         }
-        return mPath;
+//        return mPath;
+        return "";
     }
 
     public Bitmap getScreenShot(View view) {
@@ -269,10 +295,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (!dir.exists()) {
             dir.mkdirs();
         }
-        File file = new File(dirPath, fileName);
+        File file = new File(dirPath, fileName + ".jpeg");
         try {
             FileOutputStream fOut = new FileOutputStream(file);
-            bm.compress(Bitmap.CompressFormat.PNG, 85, fOut);
+            bm.compress(Bitmap.CompressFormat.JPEG, 100, fOut);
             fOut.flush();
             fOut.close();
         } catch (Exception e) {
@@ -328,6 +354,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 shareLayout.setVisibility(View.VISIBLE);
                 introLayout.setVisibility(View.GONE);
                 resultLayout.setVisibility(View.VISIBLE);
+                mAdView.setVisibility(View.VISIBLE);
                 counterTv.setVisibility(View.GONE);
                 offsetTv.setVisibility(View.GONE);
                 break;
@@ -349,21 +376,118 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return animation;
     }
 
+    private ObjectAnimator getObjectAnimatorTranslate(final View imageView, float originalX, float originalY, float newX, float newY, float originalScale, float newScale, int duration) {
+        PropertyValuesHolder zoomX = PropertyValuesHolder.ofFloat(View.SCALE_X, originalScale, newScale);
+        PropertyValuesHolder zoomY = PropertyValuesHolder.ofFloat(View.SCALE_Y, originalScale, newScale);
+        PropertyValuesHolder tX = PropertyValuesHolder.ofFloat(View.TRANSLATION_X, originalX, newX);
+        PropertyValuesHolder tY = PropertyValuesHolder.ofFloat(View.TRANSLATION_Y, originalY, newY);
+        PropertyValuesHolder rotate = PropertyValuesHolder.ofFloat(View.ROTATION, 0, 360);
+        ObjectAnimator animation = ObjectAnimator.ofPropertyValuesHolder(imageView, zoomX, zoomY, tX, tY, rotate);
+        animation.setDuration(duration);
+        return animation;
+    }
+
     private class TakeScreenshotTask extends AsyncTask<Void, Void, Void> {
+
+        private String filePath;
 
         @Override
         protected Void doInBackground(Void... params) {
-            takeScreenshot();
+            filePath = takeScreenshot();
             return null;
         }
 
         @Override
         protected void onPostExecute(Void aVoid) {
-            Intent share = new Intent(Intent.ACTION_SEND);
-            share.setType("image/png");
-            share.putExtra(Intent.EXTRA_STREAM, Uri.parse(mPath));
-            startActivity(Intent.createChooser(share, "Share Image"));
+            Uri imageUri = Uri.parse(Environment.getExternalStorageDirectory() + filePath + ".jpeg");
+            Intent shareIntent = new Intent();
+            shareIntent.setAction(Intent.ACTION_SEND);
+            shareIntent.setPackage("com.whatsapp");
+            shareIntent.putExtra(Intent.EXTRA_TEXT, "Can you beat me here?");
+            shareIntent.putExtra(Intent.EXTRA_STREAM, imageUri);
+            shareIntent.setType("image/jpeg");
+            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+            try {
+                startActivity(shareIntent);
+            } catch (android.content.ActivityNotFoundException ex) {
+                Toast.makeText(arenaView.getContext(), "Whatsapp have not been installed.", Toast.LENGTH_SHORT).show();
+            }
             super.onPostExecute(aVoid);
+        }
+    }
+
+    private class CreateBitmapTask extends AsyncTask<Void, Integer, Object> {
+        private int mType;
+        private View mView;
+        private WifiP2pManager.ActionListener mOnFinished;
+        private Bitmap mBitmap;
+        boolean isCancelled = false;
+        private float mHeight, mWidth;
+        private final int mSize = 720;
+        private String mPath;
+
+        CreateBitmapTask(View view) {
+            mView = view;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            if (mView != null) {
+                mHeight = mView.getHeight();
+                mWidth = mView.getWidth();
+
+                /**
+                 * Commented this because the quality of image obtained was not good enough
+                 */
+                /*float scaleX, scaleY;
+                if (mHeight <= 0 || mWidth <= 0) {
+                    scaleX = scaleY = 1;
+                } else {
+                    scaleX = mSize / mWidth;
+                    scaleY = mSize / mHeight;
+                }
+                mBitmap = Bitmap.createBitmap(mSize, mSize, Bitmap.Config.RGB_565);
+                Canvas canvasImage = new Canvas(mBitmap);
+                canvasImage.scale(scaleX, scaleY);*/
+
+                if (mHeight <= 0 || mWidth <= 0) {
+                    mBitmap = Bitmap.createBitmap(mSize, mSize, Bitmap.Config.RGB_565);
+                } else {
+                    mBitmap = Bitmap.createBitmap((int) mWidth, (int) mHeight
+                            , Bitmap.Config.RGB_565);
+                }
+                Canvas canvasImage = new Canvas(mBitmap);
+                mView.draw(canvasImage);
+            }
+
+            mPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "Screenshots/" + System.currentTimeMillis() + ".jpeg";
+        }
+
+
+        @Override
+        protected Object doInBackground(Void... params) {
+            mPath = takeScreenshot();
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Object o) {
+            super.onPostExecute(o);
+            Uri imageUri = Uri.parse(Environment.getExternalStorageDirectory() + mPath + ".jpeg");
+            Intent shareIntent = new Intent();
+            shareIntent.setAction(Intent.ACTION_SEND);
+            shareIntent.setPackage("com.whatsapp");
+            shareIntent.putExtra(Intent.EXTRA_STREAM, imageUri);
+            shareIntent.setType("image/jpeg");
+            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+            try {
+                startActivity(shareIntent);
+            } catch (android.content.ActivityNotFoundException ex) {
+                Toast.makeText(arenaView.getContext(), "Whatsapp have not been installed.", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 }

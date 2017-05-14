@@ -1,0 +1,73 @@
+{
+  "project_info": {
+    "project_number": "749143647864",
+    "firebase_url": "https://trippy-gifs.firebaseio.com",
+    "project_id": "trippy-gifs",
+    "storage_bucket": "trippy-gifs.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:749143647864:android:f5aa4ec7c2cf58fb",
+        "android_client_info": {
+          "package_name": "com.pukingminion.trippygifs"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "749143647864-miuvngp18a4loj76ct590b8gi2ceuhn0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCOJsHFzJu4Bf8W0332xSIFLR-52O-BrT8"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:749143647864:android:0718d26ea8d1ace6",
+        "android_client_info": {
+          "package_name": "com.pukingminion.secondchance"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "749143647864-miuvngp18a4loj76ct590b8gi2ceuhn0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCOJsHFzJu4Bf8W0332xSIFLR-52O-BrT8"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
